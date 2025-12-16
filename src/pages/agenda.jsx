@@ -3,9 +3,9 @@ import { mockTrabajos } from "../data/mockTrabajos";
 import TrabajoCard from "../components/TrabajoCard";
 import TrabajoForm from "../components/TrabajoForm";
 import DetalleTrabajo from "../components/DetalleTrabajo";
-import { FaTools } from "react-icons/fa"; // Icono de herramientas
+import { FaTools } from "react-icons/fa";
 
-export default function Agenda() {
+export default function Agenda({ temaOscuro }) {
   const [trabajos, setTrabajos] = useState(mockTrabajos);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [trabajoEditar, setTrabajoEditar] = useState(null);
@@ -52,43 +52,35 @@ export default function Agenda() {
     (a, b) => new Date(b.ingreso) - new Date(a.ingreso)
   );
 
+  const bgColor = temaOscuro ? "bg-[#003C43]" : "bg-[#E6F7F5]";
+  const textColor = temaOscuro ? "text-white" : "text-[#003C43]";
+  const filtroColorActivo = temaOscuro ? "bg-[#77B0AA]" : "bg-[#77B0AA]";
+  const filtroColorInactivo = temaOscuro ? "bg-[#135D66]" : "bg-[#A3D5D1]";
+
   return (
-    <div className="p-4 min-h-screen bg-[#003C43]">
+    <div className={`p-4 min-h-screen ${bgColor}`}>
       {/* Título central con icono */}
       <div className="flex justify-center items-center mb-6">
-        <h1 className="text-3xl font-bold text-white flex items-center gap-2">
+        <h1 className={`text-3xl font-bold flex items-center gap-2 ${textColor}`}>
           IBAÑEZ REPARACIONES <FaTools />
         </h1>
       </div>
 
       {/* Filtros */}
       <div className="flex justify-center gap-2 mb-6">
-        <button
-          onClick={() => setFiltro("todos")}
-          className={`px-3 py-1 rounded-lg font-semibold ${
-            filtro === "todos" ? "bg-[#77B0AA] text-white" : "bg-[#135D66] text-white"
-          }`}
-        >
-          Todos
-        </button>
-
-        <button
-          onClick={() => setFiltro("pendiente")}
-          className={`px-3 py-1 rounded-lg font-semibold ${
-            filtro === "pendiente" ? "bg-[#77B0AA] text-white" : "bg-[#135D66] text-white"
-          }`}
-        >
-          Pendientes
-        </button>
-
-        <button
-          onClick={() => setFiltro("completado")}
-          className={`px-3 py-1 rounded-lg font-semibold ${
-            filtro === "completado" ? "bg-[#77B0AA] text-white" : "bg-[#135D66] text-white"
-          }`}
-        >
-          Completados
-        </button>
+        {["todos", "pendiente", "completado"].map((estado) => (
+          <button
+            key={estado}
+            onClick={() => setFiltro(estado)}
+            className={`px-3 py-1 rounded-lg font-semibold ${
+              filtro === estado ? filtroColorActivo + " text-white" : filtroColorInactivo + " " + textColor
+            }`}
+          >
+            {estado === "todos"
+              ? "Todos"
+              : estado.charAt(0).toUpperCase() + estado.slice(1)}
+          </button>
+        ))}
       </div>
 
       {/* Botón agregar */}
@@ -106,7 +98,7 @@ export default function Agenda() {
 
       {/* Lista de trabajos */}
       {trabajosOrdenados.length === 0 ? (
-        <p className="text-white text-center mt-10">
+        <p className={`text-center mt-10 ${textColor}`}>
           No hay trabajos cargados
         </p>
       ) : (
@@ -114,6 +106,7 @@ export default function Agenda() {
           <TrabajoCard
             key={trabajo.id}
             trabajo={trabajo}
+            temaOscuro={temaOscuro}
             onCompletar={completarTrabajo}
             onEliminar={eliminarTrabajo}
             onEditar={editarTrabajo}
@@ -131,6 +124,7 @@ export default function Agenda() {
             setTrabajoEditar(null);
           }}
           trabajoInicial={trabajoEditar}
+          temaOscuro={temaOscuro}
         />
       )}
 
@@ -138,6 +132,7 @@ export default function Agenda() {
       {trabajoDetalle && (
         <DetalleTrabajo
           trabajo={trabajoDetalle}
+          temaOscuro={temaOscuro}
           onCerrar={() => setTrabajoDetalle(null)}
           onEditar={(trabajo) => {
             setTrabajoDetalle(null);

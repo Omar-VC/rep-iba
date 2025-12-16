@@ -4,8 +4,7 @@ import RepuestoCard from "../components/RepuestoCard";
 import RepuestoForm from "../components/RepuestoForm";
 import DetalleRepuesto from "../components/DetalleRepuesto";
 
-
-export default function Stock() {
+export default function Stock({ temaOscuro }) {
   const [repuestos, setRepuestos] = useState(mockRepuestos);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [repuestoEditar, setRepuestoEditar] = useState(null);
@@ -25,36 +24,45 @@ export default function Stock() {
     setMostrarForm(false);
   };
 
+  // Colores según tema
+  const bgMain = temaOscuro ? "bg-[#003C43] text-[#FFD93D]" : "bg-[#77B0AA] text-[#003C43]";
+  const btnBg = temaOscuro ? "bg-[#77B0AA] text-[#003C43] hover:bg-[#5FA29F]" : "bg-[#77B0AA] text-[#003C43] hover:bg-[#5FA29F]";
+
   return (
-    <div className="p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-xl font-bold">Stock de repuestos</h1>
+    <div className={`p-4 min-h-screen ${bgMain}`}>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Stock de repuestos</h1>
         <button
           onClick={() => {
             setRepuestoEditar(null);
             setMostrarForm(true);
           }}
-          className="bg-blue-500 text-white px-3 py-1 rounded"
+          className={`px-4 py-2 rounded-full font-semibold ${btnBg} transition-colors`}
         >
           + Repuesto
         </button>
       </div>
 
       {repuestos.length === 0 && (
-        <p className="text-gray-500">No hay repuestos cargados</p>
+        <p className="text-center mt-10">
+          No hay repuestos cargados
+        </p>
       )}
 
-      {repuestos.map((rep) => (
-        <RepuestoCard
-          key={rep.id}
-          repuesto={rep}
-          onEditar={(r) => {
-            setRepuestoEditar(r);
-            setMostrarForm(true);
-          }}
-          onDetalle={(r) => setRepuestoDetalle(r)}
-        />
-      ))}
+      <div className="flex flex-col gap-4">
+        {repuestos.map((rep) => (
+          <RepuestoCard
+            key={rep.id}
+            repuesto={rep}
+            onEditar={(r) => {
+              setRepuestoEditar(r);
+              setMostrarForm(true);
+            }}
+            onDetalle={(r) => setRepuestoDetalle(r)}
+            temaOscuro={temaOscuro} // pasamos el tema a los cards
+          />
+        ))}
+      </div>
 
       {mostrarForm && (
         <RepuestoForm
@@ -64,6 +72,7 @@ export default function Stock() {
             setRepuestoEditar(null);
           }}
           repuestoInicial={repuestoEditar}
+          temaOscuro={temaOscuro} // pasamos el tema al form
         />
       )}
 
@@ -76,6 +85,7 @@ export default function Stock() {
             setRepuestoEditar(r);
             setMostrarForm(true);
           }}
+          temaOscuro={temaOscuro} // pasamos el tema al detalle
         />
       )}
     </div>

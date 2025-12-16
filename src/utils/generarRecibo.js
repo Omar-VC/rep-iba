@@ -14,7 +14,13 @@ export function generarRecibo(trabajo) {
   doc.text(`Entrega: ${trabajo.entrega}`, 20, 80)
   doc.text(`Estado: ${trabajo.estado}`, 20, 90)
 
-  doc.text("Firma del técnico: ____________________", 20, 120)
+  if (trabajo.nota) {
+    // Ajustamos para que la nota pueda ocupar varias líneas
+    const notaLines = doc.splitTextToSize(`Nota: ${trabajo.nota}`, 170)
+    doc.text(notaLines, 20, 100)
+  }
+
+  doc.text("Firma del técnico: ____________________", 20, 140)
 
   doc.save(`recibo-${trabajo.cliente}.pdf`)
 }

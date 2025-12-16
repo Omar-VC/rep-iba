@@ -1,57 +1,60 @@
-export default function TrabajoCard({
-  trabajo,
-  onCompletar,
-  onEliminar,
-  onEditar,
-  onDetalle,
-}) {
+export default function TrabajoCard({ trabajo, onCompletar, onEliminar, onEditar, onDetalle, temaOscuro }) {
+  // Colores según tema
+  const cardBg = temaOscuro ? "bg-[#135D66]" : "bg-[#77B0AA]";
+  const cardText = temaOscuro ? "text-white" : "text-[#003C43]";
+  const estadoCompletado = temaOscuro ? "bg-[#003C43] text-white" : "bg-[#003C43] text-white";
+  const estadoPendiente = temaOscuro ? "bg-[#77B0AA] text-[#003C43] border border-[#003C43]" : "bg-[#E3FEF7] text-[#003C43] border border-[#003C43]";
+  const btnBg = temaOscuro ? "bg-[#003C43]" : "bg-[#003C43]";
+  const btnHover = temaOscuro ? "hover:bg-[#002D33]" : "hover:bg-[#002D33]";
+
   return (
-    <div className="bg-white rounded-xl p-4 shadow mb-4 border border-[#77B0AA]">
-      <div className="flex justify-between items-start">
+    <div className={`${cardBg} rounded-2xl p-5 shadow-lg mb-4 border-l-4 border-[#003C43] ${cardText}`}>
+      {/* Header con cliente y estado */}
+      <div className="flex justify-between items-center mb-3">
         <div>
-          <h2 className="font-bold text-[#003C43]">{trabajo.cliente}</h2>
-          <p className="text-sm text-[#135D66]">{trabajo.telefono}</p>
-          <p className="text-sm text-[#135D66]">{trabajo.equipo}</p>
+          <h2 className="font-bold text-xl">{trabajo.cliente}</h2>
+          <p className="text-sm">{trabajo.telefono}</p>
+          <p className="text-sm">{trabajo.equipo}</p>
         </div>
         <span
-          className={`text-xs px-2 py-1 rounded font-semibold ${
-            trabajo.estado === "completado"
-              ? "bg-[#77B0AA] text-white"
-              : "bg-[#E3FEF7] text-[#003C43] border border-[#135D66]"
+          className={`text-xs px-3 py-1 rounded-full font-semibold ${
+            trabajo.estado === "completado" ? estadoCompletado : estadoPendiente
           }`}
         >
           {trabajo.estado}
         </span>
       </div>
 
-      <div className="text-sm text-[#003C43] mt-2">
+      {/* Fechas */}
+      <div className="text-sm mb-4">
         <p>Ingreso: {trabajo.ingreso}</p>
         <p>Entrega: {trabajo.entrega}</p>
       </div>
 
-      <div className="flex gap-2 mt-3 flex-wrap">
+      {/* Botones */}
+      <div className="flex gap-3 flex-wrap">
         {trabajo.estado !== "completado" && (
           <button
-            className="flex-1 bg-green-500 text-white py-1 rounded hover:bg-green-600 transition-colors"
+            className={`flex-1 ${btnBg} text-white py-2 rounded-full font-semibold ${btnHover} transition-colors`}
             onClick={() => onCompletar(trabajo.id)}
           >
             Completar
           </button>
         )}
         <button
-          className="flex-1 bg-red-500 text-white py-1 rounded hover:bg-red-600 transition-colors"
+          className={`flex-1 ${btnBg} text-white py-2 rounded-full font-semibold ${btnHover} transition-colors`}
           onClick={() => onEliminar(trabajo.id)}
         >
           Eliminar
         </button>
         <button
-          className="flex-1 bg-yellow-500 text-white py-1 rounded hover:bg-yellow-600 transition-colors"
+          className={`flex-1 ${btnBg} text-white py-2 rounded-full font-semibold ${btnHover} transition-colors`}
           onClick={() => onEditar(trabajo)}
         >
           Editar
         </button>
         <button
-          className="flex-1 bg-blue-500 text-white py-1 rounded hover:bg-blue-600 transition-colors"
+          className={`flex-1 ${btnBg} text-white py-2 rounded-full font-semibold ${btnHover} transition-colors`}
           onClick={() => onDetalle(trabajo)}
         >
           Detalle
