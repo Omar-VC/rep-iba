@@ -1,51 +1,60 @@
-// src/context/AuthContext.jsx
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+} from "firebase/auth";
+import { auth } from "../firebase/firebase";
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  // Guardamos usuarios en un estado local (simulado)
-  const [usuarios, setUsuarios] = useState([
-    { usuario: "amigo", password: "1234" }, // credencial de prueba
-  ]);
-
   const [usuarioActual, setUsuarioActual] = useState(null);
+  const [cargando, setCargando] = useState(true);
 
-  // Login: devuelve true si exitoso
-  const login = (usuario, password) => {
-    const user = usuarios.find(
-      (u) => u.usuario === usuario && u.password === password
-    );
-    if (user) {
-      setUsuarioActual(user);
+  // LOGIN
+  const login = async (email, password) => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
       return true;
+    } catch (error) {
+      console.error("Error login:", error.message);
+      return false;
     }
-    return false;
   };
 
-  // Logout
-  const logout = () => {
-    setUsuarioActual(null);
+  // REGISTRO
+  const registrar = async (email, password) => {
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+      return true;
+    } catch (error) {
+      console.error("Error registro:", error.message);
+      return false;
+    }
   };
 
-  // Registrar: devuelve true si exitoso, false si el usuario ya existe
-  const registrar = (usuario, password) => {
-    const existe = usuarios.some((u) => u.usuario === usuario);
-    if (existe) return false;
-
-    const nuevoUsuario = { usuario, password };
-    setUsuarios([...usuarios, nuevoUsuario]);
-    return true;
+  // LOGOUT
+  const logout = async () => {
+    await signOut(auth);
   };
+
+  // SESIÓN PERSISTENTE
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUsuarioActual(user);
+      setCargando(false);
+    });
+
+    return unsubscribe;
+  }, []);
 
   return (
-    <AuthContext.Provider
-      value={{ usuarioActual, login, logout, registrar }}
-    >
-      {children}
+    <AuthContext.Provider value={{ usuarioActual, login, registrar, logout }}>
+      {!cargando && children}
     </AuthContext.Provider>
   );
 }
 
-// Hook para usar el contexto
 export const useAuth = () => useContext(AuthContext);
