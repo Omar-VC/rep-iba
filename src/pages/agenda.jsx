@@ -1,36 +1,78 @@
-import { useState } from "react";
-import { mockTrabajos } from "../data/mockTrabajos";
+// src/pages/Agenda.jsx
+import { useState, useEffect } from "react";
+import {
+  collection,
+  addDoc,
+  onSnapshot,
+  updateDoc,
+  deleteDoc,
+  doc,
+} from "firebase/firestore";
+import { db } from "../firebase/firebase";
+
 import TrabajoCard from "../components/TrabajoCard";
 import TrabajoForm from "../components/TrabajoForm";
 import DetalleTrabajo from "../components/DetalleTrabajo";
 import { FaTools, FaPlus } from "react-icons/fa";
 
 export default function Agenda() {
-  const [trabajos, setTrabajos] = useState(mockTrabajos);
+  const [trabajos, setTrabajos] = useState([]);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [trabajoEditar, setTrabajoEditar] = useState(null);
   const [trabajoDetalle, setTrabajoDetalle] = useState(null);
   const [filtro, setFiltro] = useState("todos");
 
-  const completarTrabajo = (id) => {
-    setTrabajos(
-      trabajos.map((t) => (t.id === id ? { ...t, estado: "completado" } : t))
-    );
+  // 🔄 Leer trabajos en tiempo real
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "trabajos"), (snapshot) => {
+      const data = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setTrabajos(data);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // ➕ Crear / ✏️ Editar trabajo
+  const guardarTrabajo = async (data) => {
+    try {
+      if (trabajoEditar) {
+        await updateDoc(doc(db, "trabajos", trabajoEditar.id), data);
+        setTrabajoEditar(null);
+      } else {
+        await addDoc(collection(db, "trabajos"), {
+          ...data,
+          estado: "pendiente",
+          pagado: false,
+          creadoEn: new Date(),
+        });
+      }
+      setMostrarForm(false);
+    } catch (error) {
+      console.error("Error guardando trabajo:", error);
+    }
   };
 
-  const marcarPagado = (id) => {
-    setTrabajos(
-      trabajos.map((t) => (t.id === id ? { ...t, pagado: true } : t))
-    );
+  // ✅ Completar trabajo
+  const completarTrabajo = async (id) => {
+    await updateDoc(doc(db, "trabajos", id), { estado: "completado" });
   };
 
-  const eliminarTrabajo = (id) => {
+  // 💰 Marcar pagado
+  const marcarPagado = async (id) => {
+    await updateDoc(doc(db, "trabajos", id), { pagado: true });
+  };
+
+  // 🗑️ Eliminar
+  const eliminarTrabajo = async (id) => {
     const confirmar = window.confirm(
       "¿Seguro que querés eliminar este trabajo?"
     );
     if (!confirmar) return;
 
-    setTrabajos(trabajos.filter((t) => t.id !== id));
+    await deleteDoc(doc(db, "trabajos", id));
   };
 
   const editarTrabajo = (trabajo) => {
@@ -38,28 +80,17 @@ export default function Agenda() {
     setMostrarForm(true);
   };
 
-  const guardarTrabajo = (data) => {
-    if (trabajoEditar) {
-      setTrabajos(
-        trabajos.map((t) => (t.id === trabajoEditar.id ? { ...t, ...data } : t))
-      );
-      setTrabajoEditar(null);
-    } else {
-      setTrabajos([...trabajos, { ...data, id: Date.now(), pagado: false }]);
-    }
-    setMostrarForm(false);
-  };
-
+  // 🔍 Filtros
   const trabajosFiltrados = trabajos.filter((t) => {
     if (filtro === "todos") return true;
     return t.estado === filtro;
   });
 
+  // ⏱️ Orden por fecha
   const trabajosOrdenados = [...trabajosFiltrados].sort(
-    (a, b) => new Date(b.ingreso) - new Date(a.ingreso)
+    (a, b) =>
+      (b.creadoEn?.seconds || 0) - (a.creadoEn?.seconds || 0)
   );
-
-
 
   return (
     <div className="p-4 min-h-screen bg-[#096B68] text-white">
@@ -73,10 +104,10 @@ export default function Agenda() {
             <button
               key={f}
               onClick={() => setFiltro(f)}
-              className={`px-4 py-2 rounded-lg font-semibold shadow-sm transition-colors duration-200 ${
+              className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
                 filtro === f
-                  ? "bg-[#129990] text-[#FFFBDE] shadow-md"
-                  : "bg-[#90D1CA] text-[#003C43] hover:bg-[#129990] hover:text-[#FFFBDE] hover:shadow-md"
+                  ? "bg-[#129990] text-[#FFFBDE]"
+                  : "bg-[#90D1CA] text-[#003C43]"
               }`}
             >
               {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -89,14 +120,14 @@ export default function Agenda() {
             setTrabajoEditar(null);
             setMostrarForm(true);
           }}
-          className="bg-[#129990] text-[#FFFBDE] px-4 py-2 rounded-lg font-semibold shadow-md hover:bg-[#096B68] hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+          className="bg-[#129990] text-[#FFFBDE] px-4 py-2 rounded-lg font-semibold flex items-center gap-2"
         >
           <FaPlus /> Trabajo
         </button>
       </div>
 
       {trabajosOrdenados.length === 0 && (
-        <p className="text-[#FFFBDE]">No hay trabajos cargados</p>
+        <p>No hay trabajos cargados</p>
       )}
 
       {trabajosOrdenados.map((trabajo) => (
@@ -140,7 +171,6 @@ export default function Agenda() {
           temaOscuro={true}
         />
       )}
-      
     </div>
   );
 }
