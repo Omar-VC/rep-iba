@@ -22,6 +22,7 @@ export default function Stock() {
     categoria: "",
     cantidad: "",
     precio: "",
+    fechaPrecio: "",
   });
 
   // 🔄 Leer repuestos
@@ -134,6 +135,12 @@ export default function Stock() {
             onChange={(e) => setForm({ ...form, precio: e.target.value })}
             className="p-2 rounded-lg bg-[#096B68] text-[#FFFBDE]"
           />
+          <input
+            type="date"
+            value={form.fechaPrecio}
+            onChange={(e) => setForm({ ...form, fechaPrecio: e.target.value })}
+            className="w-full px-3 py-2 rounded bg-white text-[#003C43]"
+          />
 
           <button className="bg-[#FFD93D] text-[#003C43] py-2 rounded-lg font-semibold">
             {repuestoEditar ? "Actualizar" : "Guardar"}
@@ -151,9 +158,21 @@ export default function Stock() {
           >
             <div>
               <p className="font-semibold">{r.nombre}</p>
+
               <p className="text-sm">
                 {r.categoria} · Stock:{" "}
                 <span className="font-bold">{r.cantidad}</span>
+              </p>
+
+              <p className="text-sm">
+                💲 {r.precio?.toLocaleString("es-AR") || "—"}
+              </p>
+
+              <p className="text-xs opacity-80">
+                Precio al{" "}
+                {r.fechaPrecio?.toDate
+                  ? r.fechaPrecio.toDate().toLocaleDateString("es-AR")
+                  : "sin fecha"}
               </p>
             </div>
 
