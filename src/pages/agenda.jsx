@@ -59,6 +59,8 @@ export default function Agenda() {
     (a, b) => new Date(b.ingreso) - new Date(a.ingreso)
   );
 
+
+
   return (
     <div className="p-4 min-h-screen bg-[#096B68] text-white">
       <h1 className="text-center text-3xl font-bold mb-6 flex justify-center items-center gap-2">
@@ -138,6 +140,7 @@ export default function Agenda() {
           temaOscuro={true}
         />
       )}
+      
     </div>
   );
 }

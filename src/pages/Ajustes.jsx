@@ -1,6 +1,16 @@
 import { useState, useEffect } from "react";
+import { getAuth, updateProfile, updatePassword } from "firebase/auth";
 
-export default function Ajustes({ usuario, onGuardar, onCerrarSesion, temaOscuro, setTemaOscuro }) {
+export default function Ajustes({
+  usuario,
+  onGuardar,
+  onCerrarSesion,
+  temaOscuro,
+  setTemaOscuro
+}) {
+  const auth = getAuth();
+  const userAuth = auth.currentUser;
+
   const [form, setForm] = useState({
     nombre: usuario?.nombre || "",
     telefono: usuario?.telefono || "",
@@ -18,22 +28,54 @@ export default function Ajustes({ usuario, onGuardar, onCerrarSesion, temaOscuro
     const val = type === "checkbox" ? checked : value;
     setForm({ ...form, [name]: val });
 
-    if (name === "temaOscuro") setTemaOscuro(val); // actualiza tema global
+    if (name === "temaOscuro") setTemaOscuro(val);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onGuardar(form);
-    alert("Cambios guardados");
+
+    try {
+      // 🔹 Actualizar nombre en Auth
+      if (userAuth && form.nombre) {
+        await updateProfile(userAuth, {
+          displayName: form.nombre,
+        });
+      }
+
+      // 🔹 Actualizar contraseña
+      if (userAuth && form.password.trim().length >= 6) {
+        await updatePassword(userAuth, form.password);
+      }
+
+      // 🔹 Guardar resto de datos (Firestore o estado global)
+      onGuardar({
+        nombre: form.nombre,
+        telefono: form.telefono,
+        notificaciones: form.notificaciones,
+        temaOscuro: form.temaOscuro,
+      });
+
+      alert("Cambios guardados correctamente");
+      setForm({ ...form, password: "" });
+
+    } catch (error) {
+      console.error(error);
+      alert("Error al guardar cambios. Volvé a iniciar sesión.");
+    }
   };
 
-  const bgForm = temaOscuro ? "bg-[#135D66] text-[#FFD93D]" : "bg-[#77B0AA] text-[#003C43]";
-  const inputColor = temaOscuro ? "border-[#FFD93D] text-[#FFD93D] focus:ring-[#FFD93D]" : "border-[#003C43] text-[#003C43] focus:ring-[#003C43]";
+  const bgForm = temaOscuro
+    ? "bg-[#135D66] text-[#FFD93D]"
+    : "bg-[#77B0AA] text-[#003C43]";
+
+  const inputColor = temaOscuro
+    ? "border-[#FFD93D] text-[#FFD93D] focus:ring-[#FFD93D]"
+    : "border-[#003C43] text-[#003C43] focus:ring-[#003C43]";
 
   return (
     <div className="p-4 flex justify-center">
-      <form 
-        onSubmit={handleSubmit} 
+      <form
+        onSubmit={handleSubmit}
         className={`w-full max-w-md p-5 rounded-2xl shadow-lg flex flex-col gap-4 ${bgForm}`}
       >
         <h1 className="text-xl font-bold mb-4">Ajustes</h1>
@@ -44,7 +86,6 @@ export default function Ajustes({ usuario, onGuardar, onCerrarSesion, temaOscuro
           value={form.nombre}
           onChange={handleChange}
           placeholder="Nombre completo"
-          required
           className={`w-full p-2 rounded-lg border focus:outline-none focus:ring-2 ${inputColor}`}
         />
 
@@ -62,7 +103,7 @@ export default function Ajustes({ usuario, onGuardar, onCerrarSesion, temaOscuro
           name="password"
           value={form.password}
           onChange={handleChange}
-          placeholder="Nueva contraseña"
+          placeholder="Nueva contraseña (mín. 6)"
           className={`w-full p-2 rounded-lg border focus:outline-none focus:ring-2 ${inputColor}`}
         />
 
@@ -72,7 +113,6 @@ export default function Ajustes({ usuario, onGuardar, onCerrarSesion, temaOscuro
             name="notificaciones"
             checked={form.notificaciones}
             onChange={handleChange}
-            className="accent-[#003C43]"
           />
           Recibir notificaciones
         </label>
@@ -83,22 +123,21 @@ export default function Ajustes({ usuario, onGuardar, onCerrarSesion, temaOscuro
             name="temaOscuro"
             checked={form.temaOscuro}
             onChange={handleChange}
-            className="accent-[#003C43]"
           />
           Tema oscuro
         </label>
 
         <button
           type="submit"
-          className="bg-[#003C43] text-white py-2 rounded-full font-semibold hover:bg-[#002D33] transition-colors"
+          className="bg-[#003C43] text-white py-2 rounded-full font-semibold"
         >
           Guardar cambios
         </button>
 
         <button
           type="button"
-          className="bg-red-500 text-white py-2 rounded-full font-semibold hover:bg-red-600 transition-colors"
           onClick={onCerrarSesion}
+          className="bg-red-500 text-white py-2 rounded-full font-semibold"
         >
           Cerrar sesión
         </button>

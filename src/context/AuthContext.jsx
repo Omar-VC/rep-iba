@@ -13,34 +13,35 @@ export function AuthProvider({ children }) {
   const [usuarioActual, setUsuarioActual] = useState(null);
   const [cargando, setCargando] = useState(true);
 
-  // LOGIN
+  const APP_MODE = import.meta.env.VITE_APP_MODE;
+
+  // 🔐 LOGIN
   const login = async (email, password) => {
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      return true;
-    } catch (error) {
-      console.error("Error login:", error.message);
-      return false;
-    }
+    await signInWithEmailAndPassword(auth, email, password);
   };
 
-  // REGISTRO
+  // 📝 REGISTRO CONTROLADO
   const registrar = async (email, password) => {
-    try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      return true;
-    } catch (error) {
-      console.error("Error registro:", error.message);
-      return false;
+    // 🔒 En producción: si ya hay usuario, no permitir registrar otro
+    if (APP_MODE === "prod" && auth.currentUser) {
+      throw new Error("Registro deshabilitado en producción");
     }
+
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+
+    return userCredential.user;
   };
 
-  // LOGOUT
+  // 🚪 LOGOUT
   const logout = async () => {
     await signOut(auth);
   };
 
-  // SESIÓN PERSISTENTE
+  // 🔄 SESIÓN PERSISTENTE
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUsuarioActual(user);
@@ -51,7 +52,14 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ usuarioActual, login, registrar, logout }}>
+    <AuthContext.Provider
+      value={{
+        usuarioActual,
+        login,
+        registrar,
+        logout,
+      }}
+    >
       {!cargando && children}
     </AuthContext.Provider>
   );

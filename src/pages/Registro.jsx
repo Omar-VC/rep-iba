@@ -1,16 +1,19 @@
-// src/pages/Registro.jsx
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 export default function Registro() {
   const { registrar } = useAuth();
-  const [usuario, setUsuario] = useState("");
+  const navigate = useNavigate();
+  const APP_MODE = import.meta.env.VITE_APP_MODE;
+
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [error, setError] = useState("");
   const [exito, setExito] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setExito("");
@@ -20,14 +23,12 @@ export default function Registro() {
       return;
     }
 
-    const registroExitoso = registrar(usuario, password);
-    if (!registroExitoso) {
-      setError("El usuario ya existe");
-    } else {
+    try {
+      await registrar(email, password);
       setExito("Registro exitoso. Ya podés ingresar.");
-      setUsuario("");
-      setPassword("");
-      setPasswordConfirm("");
+      navigate("/login");
+    } catch (err) {
+      setError(err.message);
     }
   };
 
@@ -39,15 +40,21 @@ export default function Registro() {
       >
         <h2 className="text-2xl font-bold text-center">Registro</h2>
 
+        {APP_MODE === "prod" && (
+          <p className="text-xs text-center text-yellow-300">
+            Registro disponible solo durante la configuración inicial.
+          </p>
+        )}
+
         {error && <p className="text-red-400 text-sm text-center">{error}</p>}
         {exito && <p className="text-green-400 text-sm text-center">{exito}</p>}
 
         <input
-          type="text"
-          placeholder="Usuario"
-          value={usuario}
-          onChange={(e) => setUsuario(e.target.value)}
-          className="px-3 py-2 rounded-lg border border-[#096B68] bg-[#129990] text-[#FFFBDE] focus:outline-none focus:ring-2 focus:ring-[#FFFBDE]"
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="px-3 py-2 rounded-lg border border-[#096B68] bg-[#129990] text-[#FFFBDE]"
           required
         />
 
@@ -56,7 +63,7 @@ export default function Registro() {
           placeholder="Contraseña"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="px-3 py-2 rounded-lg border border-[#096B68] bg-[#129990] text-[#FFFBDE] focus:outline-none focus:ring-2 focus:ring-[#FFFBDE]"
+          className="px-3 py-2 rounded-lg border border-[#096B68] bg-[#129990] text-[#FFFBDE]"
           required
         />
 
@@ -65,13 +72,13 @@ export default function Registro() {
           placeholder="Confirmar contraseña"
           value={passwordConfirm}
           onChange={(e) => setPasswordConfirm(e.target.value)}
-          className="px-3 py-2 rounded-lg border border-[#096B68] bg-[#129990] text-[#FFFBDE] focus:outline-none focus:ring-2 focus:ring-[#FFFBDE]"
+          className="px-3 py-2 rounded-lg border border-[#096B68] bg-[#129990] text-[#FFFBDE]"
           required
         />
 
         <button
           type="submit"
-          className="py-2 rounded-full bg-[#FFD93D] text-[#003C43] font-semibold hover:bg-[#E6C733] transition-colors"
+          className="py-2 rounded-full bg-[#FFD93D] text-[#003C43] font-semibold hover:bg-[#E6C733]"
         >
           Registrarse
         </button>
