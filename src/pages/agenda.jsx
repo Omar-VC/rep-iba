@@ -13,7 +13,7 @@ import { db } from "../firebase/firebase";
 import TrabajoCard from "../components/TrabajoCard";
 import TrabajoForm from "../components/TrabajoForm";
 import DetalleTrabajo from "../components/DetalleTrabajo";
-import { FaTools, FaPlus } from "react-icons/fa";
+import { FaTools, FaPlus, FaBell } from "react-icons/fa";
 
 export default function Agenda() {
   const [trabajos, setTrabajos] = useState([]);
@@ -86,35 +86,60 @@ export default function Agenda() {
     return t.estado === filtro;
   });
 
-  // ⏱️ Orden por fecha
+  // ⏱️ Orden por fecha de creación
   const trabajosOrdenados = [...trabajosFiltrados].sort(
-    (a, b) =>
-      (b.creadoEn?.seconds || 0) - (a.creadoEn?.seconds || 0)
+    (a, b) => (b.creadoEn?.seconds || 0) - (a.creadoEn?.seconds || 0)
   );
+
+  // 🔔 Trabajos próximos a entregar (2 a 7 días)
+  // 🔔 Trabajos próximos a entregar (2 a 7 días desde fechaIngreso)
+  const trabajosProximos = trabajos.filter((t) => {
+    if (!t.entrega) return false;
+
+    const fechaEntrega = new Date(t.entrega); // convertir string a Date
+    const hoy = new Date();
+
+    const diffDias = Math.ceil((fechaEntrega - hoy) / (1000 * 60 * 60 * 24));
+
+    return diffDias >= 2 && diffDias <= 7 && t.estado !== "completado";
+  });
 
   return (
     <div className="p-4 min-h-screen bg-[#096B68] text-white">
-      <h1 className="text-center text-3xl font-bold mb-6 flex justify-center items-center gap-2">
-        IBAÑEZ REPARACIONES <FaTools />
-      </h1>
-
+      {/* HEADER */}
       <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
-        <div className="flex gap-2 flex-wrap">
-          {["todos", "pendiente", "completado"].map((f) => (
-            <button
-              key={f}
-              onClick={() => setFiltro(f)}
-              className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                filtro === f
-                  ? "bg-[#129990] text-[#FFFBDE]"
-                  : "bg-[#90D1CA] text-[#003C43]"
-              }`}
-            >
-              {f.charAt(0).toUpperCase() + f.slice(1)}
-            </button>
-          ))}
-        </div>
+        <h1 className="text-3xl font-bold flex items-center gap-2">
+          IBAÑEZ REPARACIONES <FaTools />
+        </h1>
 
+        {/* Botón campana */}
+        <button
+          className="relative bg-transparent border-none text-white text-2xl"
+          onClick={() => {
+            if (trabajosProximos.length === 0) {
+              alert("No hay trabajos próximos a entregar esta semana.");
+            } else {
+              const lista = trabajosProximos
+                .map(
+                  (t) =>
+                    `${t.cliente || t.nombre} - ${new Date(
+                      t.entrega
+                    ).toLocaleDateString()}`
+                )
+                .join("\n");
+              alert("Trabajos próximos a entregar:\n" + lista);
+            }
+          }}
+        >
+          <FaBell />
+          {trabajosProximos.length > 0 && (
+            <span className="absolute -top-2 -right-2 bg-red-500 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
+              {trabajosProximos.length}
+            </span>
+          )}
+        </button>
+
+        {/* Botón + Trabajo */}
         <button
           onClick={() => {
             setTrabajoEditar(null);
@@ -126,9 +151,25 @@ export default function Agenda() {
         </button>
       </div>
 
-      {trabajosOrdenados.length === 0 && (
-        <p>No hay trabajos cargados</p>
-      )}
+      {/* FILTROS */}
+      <div className="flex gap-2 flex-wrap mb-4">
+        {["todos", "pendiente", "completado"].map((f) => (
+          <button
+            key={f}
+            onClick={() => setFiltro(f)}
+            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+              filtro === f
+                ? "bg-[#129990] text-[#FFFBDE]"
+                : "bg-[#90D1CA] text-[#003C43]"
+            }`}
+          >
+            {f.charAt(0).toUpperCase() + f.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      {/* LISTADO DE TRABAJOS */}
+      {trabajosOrdenados.length === 0 && <p>No hay trabajos cargados</p>}
 
       {trabajosOrdenados.map((trabajo) => (
         <TrabajoCard
@@ -143,6 +184,7 @@ export default function Agenda() {
         />
       ))}
 
+      {/* FORMULARIO */}
       {mostrarForm && (
         <TrabajoForm
           onGuardar={guardarTrabajo}
@@ -155,6 +197,7 @@ export default function Agenda() {
         />
       )}
 
+      {/* DETALLE */}
       {trabajoDetalle && (
         <DetalleTrabajo
           trabajo={trabajoDetalle}
